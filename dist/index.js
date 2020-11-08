@@ -155,14 +155,14 @@ function compiler(options) {
     var listStart
     var event
 
+    /*
     while (++index < events.length) {
       event = events[index]
-
-      // We preprocess lists to add `listItem` tokens, and to infer whether
+       // We preprocess lists to add `listItem` tokens, and to infer whether
       // items the list itself are spread out.
       if (
-        event[1].type === 'listOrdered' ||
-        event[1].type === 'listUnordered'
+        event[1].type === types.listOrdered ||
+        event[1].type === types.listUnordered
       ) {
         if (event[0] === 'enter') {
           listStack.push(index)
@@ -172,6 +172,7 @@ function compiler(options) {
         }
       }
     }
+    */
 
     index = -1
     length = events.length
