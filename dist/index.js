@@ -3,9 +3,6 @@
 module.exports = fromMarkdown
 
 // These three are compiled away in the `dist/`
-var codes = require('micromark/dist/character/codes')
-var constants = require('micromark/dist/constant/constants')
-var types = require('micromark/dist/constant/types')
 
 var toString = require('mdast-util-to-string')
 var assign = require('micromark/dist/constant/assign')
@@ -43,6 +40,7 @@ function compiler(options) {
         'paragraph',
         'strong'
       ],
+
       enter: {
         autolink: opener(link),
         autolinkProtocol: onenterdata,
@@ -86,6 +84,7 @@ function compiler(options) {
         strong: opener(strong),
         thematicBreak: opener(thematicBreak)
       },
+
       exit: {
         atxHeading: closer(),
         atxHeadingSequence: onexitatxheadingsequence,
@@ -137,6 +136,7 @@ function compiler(options) {
         thematicBreak: closer()
       }
     },
+
     settings.mdastExtensions || []
   )
 
@@ -168,8 +168,8 @@ function compiler(options) {
       // We preprocess lists to add `listItem` tokens, and to infer whether
       // items the list itself are spread out.
       if (
-        events[index][1].type === types.listOrdered ||
-        events[index][1].type === types.listUnordered
+        events[index][1].type === 'listOrdered' ||
+        events[index][1].type === 'listUnordered'
       ) {
         if (events[index][0] === 'enter') {
           listStack.push(index)
@@ -211,6 +211,7 @@ function compiler(options) {
       start: point(
         events.length ? events[0][1].start : {line: 1, column: 1, offset: 0}
       ),
+
       end: point(
         events.length
           ? events[events.length - 2][1].end
@@ -237,9 +238,9 @@ function compiler(options) {
       event = events[index]
 
       if (
-        event[1].type === types.listUnordered ||
-        event[1].type === types.listOrdered ||
-        event[1].type === types.blockQuote
+        event[1].type === 'listUnordered' ||
+        event[1].type === 'listOrdered' ||
+        event[1].type === 'blockQuote'
       ) {
         if (event[0] === 'enter') {
           containerBalance++
@@ -248,7 +249,7 @@ function compiler(options) {
         }
 
         atMarker = undefined
-      } else if (event[1].type === types.lineEndingBlank) {
+      } else if (event[1].type === 'lineEndingBlank') {
         if (event[0] === 'enter') {
           if (
             listItem &&
@@ -262,11 +263,11 @@ function compiler(options) {
           atMarker = undefined
         }
       } else if (
-        event[1].type === types.linePrefix ||
-        event[1].type === types.listItemValue ||
-        event[1].type === types.listItemMarker ||
-        event[1].type === types.listItemPrefix ||
-        event[1].type === types.listItemPrefixWhitespace
+        event[1].type === 'linePrefix' ||
+        event[1].type === 'listItemValue' ||
+        event[1].type === 'listItemMarker' ||
+        event[1].type === 'listItemPrefix' ||
+        event[1].type === 'listItemPrefixWhitespace'
       ) {
         // Empty.
       } else {
@@ -276,11 +277,11 @@ function compiler(options) {
       if (
         (!containerBalance &&
           event[0] === 'enter' &&
-          event[1].type === types.listItemPrefix) ||
+          event[1].type === 'listItemPrefix') ||
         (containerBalance === -1 &&
           event[0] === 'exit' &&
-          (event[1].type === types.listUnordered ||
-            event[1].type === types.listOrdered))
+          (event[1].type === 'listUnordered' ||
+            event[1].type === 'listOrdered'))
       ) {
         if (listItem) {
           tailIndex = index
@@ -290,24 +291,24 @@ function compiler(options) {
             tailEvent = events[tailIndex]
 
             if (
-              tailEvent[1].type === types.lineEnding ||
-              tailEvent[1].type === types.lineEndingBlank
+              tailEvent[1].type === 'lineEnding' ||
+              tailEvent[1].type === 'lineEndingBlank'
             ) {
               if (tailEvent[0] === 'exit') continue
 
               if (lineIndex) {
-                events[lineIndex][1].type = types.lineEndingBlank
+                events[lineIndex][1].type = 'lineEndingBlank'
                 listSpread = true
               }
 
-              tailEvent[1].type = types.lineEnding
+              tailEvent[1].type = 'lineEnding'
               lineIndex = tailIndex
             } else if (
-              tailEvent[1].type === types.linePrefix ||
-              tailEvent[1].type === types.blockQuotePrefix ||
-              tailEvent[1].type === types.blockQuotePrefixWhitespace ||
-              tailEvent[1].type === types.blockQuoteMarker ||
-              tailEvent[1].type === types.listItemIndent
+              tailEvent[1].type === 'linePrefix' ||
+              tailEvent[1].type === 'blockQuotePrefix' ||
+              tailEvent[1].type === 'blockQuotePrefixWhitespace' ||
+              tailEvent[1].type === 'blockQuoteMarker' ||
+              tailEvent[1].type === 'listItemIndent'
             ) {
               // Empty
             } else {
@@ -333,12 +334,13 @@ function compiler(options) {
         }
 
         // Create a new list item.
-        if (event[1].type === types.listItemPrefix) {
+        if (event[1].type === 'listItemPrefix') {
           listItem = {
             type: 'listItem',
             _spread: false,
             start: point(event[1].start)
           }
+
           events.splice(index, 0, ['enter', listItem, event[2]])
           index++
           length++
@@ -440,8 +442,9 @@ function compiler(options) {
     if (getData('expectingFirstListItemValue')) {
       this.stack[this.stack.length - 2].start = parseInt(
         this.sliceSerialize(token),
-        constants.numericBaseDecimal
+        10
       )
+
       setData('expectingFirstListItemValue')
     }
   }
@@ -469,6 +472,7 @@ function compiler(options) {
       /^(\r?\n|\r)|(\r?\n|\r)$/g,
       ''
     )
+
     setData('flowCodeInside')
   }
 
@@ -510,7 +514,7 @@ function compiler(options) {
 
   function onexitsetextheadinglinesequence(token) {
     this.stack[this.stack.length - 1].depth =
-      this.sliceSerialize(token).charCodeAt(0) === codes.equalsTo ? 1 : 2
+      this.sliceSerialize(token).charCodeAt(0) === 61 ? 1 : 2
   }
 
   function onexitsetextheading() {
@@ -545,6 +549,7 @@ function compiler(options) {
       context.children[context.children.length - 1].position.end = point(
         token.end
       )
+
       setData('atHardBreak')
       return
     }
@@ -675,10 +680,9 @@ function compiler(options) {
     if (type) {
       value = safeFromInt(
         data,
-        type === types.characterReferenceMarkerNumeric
-          ? constants.numericBaseDecimal
-          : constants.numericBaseHexadecimal
+        type === 'characterReferenceMarkerNumeric' ? 10 : 16
       )
+
       setData('characterReferenceType')
     } else {
       value = decode(data)
